@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Gastos de viaje</title>
+<meta name="description" content="Divide gastos de viaje llevando una cuenta por moneda y propone los reembolsos mínimos.">
+<meta name="theme-color" content="#2f6df6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#f0f2f5; --line:#dfe3e8;
+  --txt:#151a21; --muted:#657084; --accent:#2f6df6; --accent-soft:#e7efff;
+  --pos:#0f8a4d; --neg:#c9382e; --warn:#a86800; --warn-soft:#fdf3e0;
+  --radius:12px; --shadow:0 1px 2px rgba(16,24,40,.06), 0 6px 20px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel-2:#1d2430; --line:#2a323d;
+    --txt:#e6eaf0; --muted:#9aa5b5; --accent:#5b8dff; --accent-soft:#1b2740;
+    --pos:#3fce8b; --neg:#ff7b6e; --warn:#e5a83a; --warn-soft:#33260f;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#f0f2f5; --line:#dfe3e8;
+  --txt:#151a21; --muted:#657084; --accent:#2f6df6; --accent-soft:#e7efff;
+  --pos:#0f8a4d; --neg:#c9382e; --warn:#a86800; --warn-soft:#fdf3e0;
+  --shadow:0 1px 2px rgba(16,24,40,.06), 0 6px 20px rgba(16,24,40,.06);
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --panel:#161b22; --panel-2:#1d2430; --line:#2a323d;
+  --txt:#e6eaf0; --muted:#9aa5b5; --accent:#5b8dff; --accent-soft:#1b2740;
+  --pos:#3fce8b; --neg:#ff7b6e; --warn:#e5a83a; --warn-soft:#33260f;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 80px}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+h1{font-size:19px} h2{font-size:16px} h3{font-size:14px}
+button{font:inherit;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+
+header.top{
+  position:sticky;top:0;z-index:30;background:var(--bg);
+  border-bottom:1px solid var(--line);margin:0 -16px 16px;padding:12px 16px;
+}
+.top-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;margin-right:auto;min-width:0}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);flex:none}
+.brand h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+select.trip{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 10px;max-width:220px}
+.icon-btn{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 10px;cursor:pointer;line-height:1}
+.icon-btn:hover{border-color:var(--accent)}
+nav.tabs{display:flex;gap:4px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{background:transparent;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:550;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:14px}
+.card>.card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.card>.card-head .spacer{margin-left:auto}
+.muted{color:var(--muted)}
+.small{font-size:13px} .tiny{font-size:12px}
+.mono{font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:#fff;border:1px solid transparent;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:var(--panel);color:var(--txt);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn.danger{background:transparent;color:var(--neg);border-color:var(--line)}
+.btn.danger:hover{border-color:var(--neg)}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+label.fld{display:block;margin-bottom:10px}
+label.fld>span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px;font-weight:550}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
+@media (max-width:560px){.grid3{grid-template-columns:1fr 1fr}}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:650;letter-spacing:.02em}
+.pill.cur{background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+.pill.on{background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.empty p{margin:6px 0}
+.sep{height:1px;background:var(--line);margin:12px -14px}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.notice{background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);border-radius:9px;padding:8px 10px;font-size:13px;margin-bottom:10px}
+.big{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+
+.exp{display:flex;gap:12px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.exp:last-child{border-bottom:none}
+.exp:hover{background:var(--panel-2)}
+.exp .date{flex:none;width:44px;text-align:center;color:var(--muted);font-size:11.5px;line-height:1.15}
+.exp .date b{display:block;font-size:16px;color:var(--txt);font-weight:650}
+.exp .body{flex:1;min-width:0}
+.exp .body .t{font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp .body .s{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp .amt{flex:none;text-align:right;font-weight:650}
+.exp .amt .c{display:block;font-size:11px;color:var(--muted);font-weight:500}
+.daysep{padding:10px 4px 4px;font-size:12px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+
+.bal{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.bal:last-child{border-bottom:none}
+.avatar{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;background:var(--accent)}
+.bal .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal .v{font-weight:650;text-align:right}
+.barwrap{height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden;margin-top:3px}
+.barwrap i{display:block;height:100%}
+.tx{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tx:last-child{border-bottom:none}
+.tx .who{flex:1;min-width:180px}
+.tx .arrow{color:var(--muted);padding:0 2px}
+table.mini{width:100%;border-collapse:collapse;font-size:13.5px}
+table.mini th,table.mini td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.mini th:first-child,table.mini td:first-child{text-align:left}
+table.mini th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+table.mini tr:last-child td{border-bottom:none}
+.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,20,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0}
+@media (min-width:640px){.modal-bg{align-items:center;padding:20px}}
+.modal{background:var(--panel);border:1px solid var(--line);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px;box-shadow:0 -8px 40px rgba(0,0,0,.3)}
+@media (min-width:640px){.modal{border-radius:16px}}
+.modal h2{margin-bottom:12px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;position:sticky;bottom:-16px;background:var(--panel);padding:10px 0 0}
+.modal-actions .btn{flex:1}
+.splitrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.splitrow:last-child{border-bottom:none}
+.splitrow input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.splitrow .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.splitrow input[type=text].w{width:96px;flex:none;text-align:right;padding:6px 8px}
+.splitrow .calc{width:100px;flex:none;text-align:right;font-size:12.5px;color:var(--muted)}
+.segmented{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:2px;gap:2px}
+.segmented button{flex:1;background:transparent;border:none;border-radius:7px;padding:6px 4px;cursor:pointer;font-size:12.5px;color:var(--muted);font-weight:550}
+.segmented button[aria-pressed="true"]{background:var(--panel);color:var(--txt);box-shadow:var(--shadow)}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:40;width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 6px 20px rgba(47,109,246,.45)}
+.fab:hover{filter:brightness(1.08)}
+.hidden{display:none !important}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.filters input,.filters select{width:auto;flex:1;min-width:120px;font-size:13.5px;padding:7px 9px}
+.curcard{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--panel)}
+.curcard:last-child{margin-bottom:0}
+.curcard>h3{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.curcard>h3 .spacer{margin-left:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand"><span class="dot"></span><h1 id="tripTitle">Gastos de viaje</h1></div>
+    <select class="trip" id="tripSel" aria-label="Viaje activo"></select>
+    <button class="btn sm hidden" id="btnInstall">Instalar</button>
+    <button class="icon-btn" id="btnTrips" title="Administrar viajes">⚙︎</button>
+    <button class="icon-btn" id="btnTheme" title="Cambiar tema">◐</button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="gastos" aria-selected="true">Gastos</button>
+    <button role="tab" data-tab="saldos" aria-selected="false">Saldos</button>
+    <button role="tab" data-tab="liquidar" aria-selected="false">Liquidación</button>
+    <button role="tab" data-tab="config" aria-selected="false">Ajustes</button>
+  </nav>
+  <div id="storeWarn" class="notice hidden" style="margin:10px 0 0">
+    <b>Sin guardado automático.</b> Este navegador no permite almacenar datos acá. Exportá una copia antes de cerrar.
+  </div>
+</header>
+
+<main id="view"></main>
+</div>
+
+<button class="fab" id="fab" title="Nuevo gasto" aria-label="Nuevo gasto">+</button>
+<div id="modalHost"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Gastos de viaje — app local, sin servidor.
+
+   Criterio contable: CADA MONEDA LLEVA SU PROPIA CUENTA.
+   Un gasto en euros genera deuda en euros y se salda en euros.
+   Nunca se convierte nada para calcular saldos: no hay tipo de
+   cambio metido en el medio ni diferencias de cambio silenciosas.
+   (Hay un total equivalente opcional, sólo informativo.)
+
+   Los datos se guardan en localStorage de este navegador.
+   ============================================================ */
+
+const LS_KEY = "gastos-viaje-v1";
+const CATALOG = [
+  {code:"ARS", symbol:"$",   decimals:2, name:"Peso argentino"},
+  {code:"USD", symbol:"US$", decimals:2, name:"Dólar"},
+  {code:"EUR", symbol:"€",   decimals:2, name:"Euro"},
+  {code:"BRL", symbol:"R$",  decimals:2, name:"Real"},
+  {code:"CLP", symbol:"$",   decimals:0, name:"Peso chileno"},
+  {code:"UYU", symbol:"$U",  decimals:2, name:"Peso uruguayo"},
+  {code:"PYG", symbol:"₲",   decimals:0, name:"Guaraní"},
+  {code:"GBP", symbol:"£",   decimals:2, name:"Libra"},
+  {code:"MXN", symbol:"$",   decimals:2, name:"Peso mexicano"},
+  {code:"COP", symbol:"$",   decimals:0, name:"Peso colombiano"},
+];
+const CATEGORIES = ["Comida","Alojamiento","Transporte","Actividades","Compras","Nafta","Peajes","Otros"];
+const AV_COLORS = ["#2f6df6","#0f8a4d","#c9382e","#8b5cf6","#d97706","#0891b2","#db2777","#65a30d","#7c3aed","#0d9488"];
+
+/* ---------- utilidades ---------- */
+const uid = () => Math.random().toString(36).slice(2,10);
+const $ = (s,r=document) => r.querySelector(s);
+const $$ = (s,r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+
+/** Acepta "1.234,56", "1234.56", "1.234", "1 234,5". Devuelve Number o NaN. */
+function parseAmount(str){
+  if (typeof str === "number") return str;
+  let s = String(str??"").trim().replace(/[^\d.,\-]/g,"");
+  if (!s) return NaN;
+  const neg = s.startsWith("-"); s = s.replace(/-/g,"");
+  const hasC = s.includes(","), hasD = s.includes(".");
+  if (hasC && hasD){
+    s = s.lastIndexOf(",") > s.lastIndexOf(".")
+      ? s.replace(/\./g,"").replace(",",".")   // 1.234,56
+      : s.replace(/,/g,"");                    // 1,234.56
+  } else if (hasC){
+    s = s.replace(/\./g,"").replace(",",".");
+  } else if (hasD){
+    // "1.5" => decimal ; "1.234" o "1.234.567" => separador de miles (uso local)
+    const parts = s.split(".");
+    if (parts.length > 2 || parts[parts.length-1].length === 3) s = parts.join("");
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? NaN : (neg ? -n : n);
+}
+const pow10 = d => Math.pow(10,d);
+const toMinor = (n,dec) => Math.round(n * pow10(dec));
+const toMajor = (m,dec) => m / pow10(dec);
+const numStr = (n, max=6) => (n===""||n==null||isNaN(n)) ? "" : Number(n).toLocaleString("es-AR",{maximumFractionDigits:max, useGrouping:false});
+
+/** Reparto entero por mayor resto: nunca pierde ni inventa centavos. */
+function allocate(totalMinor, weights){
+  const n = weights.length;
+  if (!n) return [];
+  const sum = weights.reduce((a,b)=>a+b,0);
+  if (!(sum > 0)) return weights.map(()=>0);
+  const sign = totalMinor < 0 ? -1 : 1;
+  const tot = Math.abs(totalMinor);
+  const raw = weights.map(w => tot * w / sum);
+  const out = raw.map(Math.floor);
+  const rem = tot - out.reduce((a,b)=>a+b,0);
+  const order = raw.map((r,i)=>({i, f:r-Math.floor(r)})).sort((a,b)=> b.f-a.f || a.i-b.i);
+  for (let k=0; k<rem; k++) out[order[k % n].i]++;
+  return out.map(v => v*sign);
+}
+
+/* ---------- estado ---------- */
+let S = loadState();
+let ui = { tab:"gastos", filterText:"", filterPerson:"", filterCur:"" };
+
+function blankTrip(name, main){
+  const b = CATALOG.find(c=>c.code===(main||"ARS")) || CATALOG[0];
+  return {
+    id: uid(), name: name || "Mi viaje", ref: b.code, cc: "54",
+    currencies: [ {code:b.code, symbol:b.symbol, decimals:b.decimals, rate:1} ],
+    people: [], expenses: [], payments: []
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw){
+      const st = JSON.parse(raw);
+      if (st && Array.isArray(st.trips) && st.trips.length) return st;
+    }
+  }catch(e){ console.warn("No se pudo leer el almacenamiento:", e); }
+  const t = blankTrip("Mi viaje");
+  return { version:3, trips:[t], activeTrip:t.id, theme:"auto", showEquiv:false };
+}
+/** Completa campos que puedan faltar (datos viejos o importados). */
+function migrate(st){
+  for (const t of st.trips){
+    t.people = t.people||[]; t.expenses = t.expenses||[]; t.payments = t.payments||[];
+    if (!t.cc) t.cc = "54";
+    for (const p of t.people) if (typeof p.phone !== "string") p.phone = "";
+    if (!t.ref) t.ref = t.base || (t.currencies && t.currencies[0] && t.currencies[0].code) || "ARS";
+    delete t.base;
+    if (!t.currencies || !t.currencies.length){
+      const c = CATALOG.find(x=>x.code===t.ref) || CATALOG[0];
+      t.currencies = [{code:c.code, symbol:c.symbol, decimals:c.decimals, rate:1}];
+    }
+    for (const c of t.currencies) if (typeof c.rate !== "number") c.rate = c.code===t.ref ? 1 : 0;
+    const r = t.currencies.find(c=>c.code===t.ref); if (r) r.rate = 1;
+    // las conversiones de versiones anteriores ya no forman parte de la contabilidad
+    for (const arr of [t.expenses, t.payments]) for (const m of arr){ delete m.baseMinor; delete m.rate; }
+  }
+  if (!st.trips.some(t=>t.id===st.activeTrip)) st.activeTrip = st.trips[0].id;
+  if (typeof st.showEquiv !== "boolean") st.showEquiv = false;
+  st.version = 3;
+  return st;
+}
+let storageOk = true, storageWarned = false;
+function save(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(S));
+    storageOk = true;
+  }catch(e){
+    storageOk = false;
+    if (!storageWarned){   // una sola vez: render() llama a save() todo el tiempo
+      storageWarned = true;
+      alert("Este navegador no está guardando los datos.\n\nPodés seguir trabajando, pero exportá una copia antes de cerrar la app.\n\n(" + e.message + ")");
+    }
+  }
+}
+const trip = () => S.trips.find(t => t.id === S.activeTrip) || S.trips[0];
+const person = id => trip().people.find(p => p.id === id);
+const pname = id => (person(id)||{}).name || "—";
+const cur = code => trip().currencies.find(c => c.code === code) || {code, symbol:"", decimals:2, rate:0};
+function avatarColor(id){
+  const i = Math.max(0, trip().people.findIndex(p=>p.id===id));
+  return AV_COLORS[i % AV_COLORS.length];
+}
+const initials = n => String(n||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]).join("").toUpperCase();
+
+function fmt(minor, code){
+  const c = cur(code);
+  const v = toMajor(minor, c.decimals);
+  return c.symbol + " " + v.toLocaleString("es-AR",{minimumFractionDigits:c.decimals, maximumFractionDigits:c.decimals});
+}
+function fmtSigned(minor, code){
+  return (minor > 0 ? "+" : minor < 0 ? "−" : "") + fmt(Math.abs(minor), code);
+}
+
+/* ---------- reparto ---------- */
+const splitIds = split => Object.keys(split.parts).filter(id => person(id));
+function splitWeights(split){
+  const ids = splitIds(split);
+  const w = ids.map(id => Math.max(0, Number(split.parts[id])||0));
+  return w.some(x => x > 0) ? w : ids.map(()=>1);
+}
+/** Reparte un total entre los participantes según el criterio del gasto. */
+function sharesWith(total, split){
+  const ids = splitIds(split);
+  if (!ids.length) return {};
+  const alloc = allocate(total, splitWeights(split));
+  const res = {}; ids.forEach((id,i) => res[id] = alloc[i]);
+  return res;
+}
+const sharesOf = e => sharesWith(e.amountMinor, e.split);
+
+/* ---------- saldos, una cuenta por moneda ---------- */
+/** {codigo: {personId: minor}}. Positivo = le deben. */
+function balances(){
+  const t = trip(), out = {};
+  const acct = code => {
+    if (!out[code]) out[code] = Object.fromEntries(t.people.map(p=>[p.id,0]));
+    return out[code];
+  };
+  for (const e of t.expenses){
+    if (!person(e.payer)) continue;
+    const b = acct(e.currency);
+    b[e.payer] += e.amountMinor;
+    for (const [id,v] of Object.entries(sharesOf(e))) b[id] -= v;
+  }
+  for (const p of t.payments){
+    if (!person(p.from) || !person(p.to)) continue;
+    const b = acct(p.currency);
+    b[p.from] += p.amountMinor;   // pagó: baja su deuda
+    b[p.to]   -= p.amountMinor;
+  }
+  return out;
+}
+/** Monedas con movimientos, en el orden en que están definidas. */
+function activeCurrencies(){
+  const b = balances();
+  return trip().currencies.map(c=>c.code).filter(c => c in b).concat(
+    Object.keys(b).filter(c => !trip().currencies.some(x=>x.code===c))
+  );
+}
+
+/** Transferencias mínimas: primero cruces exactos, después voraz mayor-con-mayor. */
+function settle(bal){
+  let debt = [], cred = [];
+  for (const [p,v] of Object.entries(bal)){
+    if (v < 0) debt.push({p, v:-v});
+    else if (v > 0) cred.push({p, v});
+  }
+  const tx = [];
+  for (const d of debt){                       // 1) coincidencias exactas
+    if (d.v === 0) continue;
+    const m = cred.find(c => c.v === d.v);
+    if (m){ tx.push({from:d.p, to:m.p, amount:d.v}); d.v = 0; m.v = 0; }
+  }
+  debt = debt.filter(d=>d.v>0).sort((a,b)=>b.v-a.v);
+  cred = cred.filter(c=>c.v>0).sort((a,b)=>b.v-a.v);
+  let i=0, j=0;                                 // 2) el que más debe le paga al que más le deben
+  while (i<debt.length && j<cred.length){
+    const amt = Math.min(debt[i].v, cred[j].v);
+    if (amt>0) tx.push({from:debt[i].p, to:cred[j].p, amount:amt});
+    debt[i].v -= amt; cred[j].v -= amt;
+    if (debt[i].v === 0) i++;
+    if (cred[j].v === 0) j++;
+  }
+  return tx;
+}
+
+/* ---------- teléfonos y mensajes ---------- */
+/** Normaliza a formato internacional sin signos, como lo pide WhatsApp.
+    Para Argentina agrega el 9 de celular y saca el 15 del número local. */
+function waNumero(raw, cc){
+  let n = String(raw||"").replace(/\D/g,"");
+  if (!n) return "";
+  cc = String(cc||"54").replace(/\D/g,"") || "54";
+  n = n.replace(/^0+/,"");
+  if (n.startsWith(cc) && n.length > cc.length + 6) n = n.slice(cc.length);
+  if (cc === "54"){
+    if (n.startsWith("9")) n = n.slice(1);
+    n = n.replace(/^0+/,"");
+    if (n.length > 10){                       // viene con el 15 detrás del código de área
+      for (const k of [2,3,4]){
+        if (n.slice(k,k+2) === "15" && n.length - 2 === 10){ n = n.slice(0,k) + n.slice(k+2); break; }
+      }
+    }
+    return "549" + n;
+  }
+  return cc + n;
+}
+const telDe = id => waNumero((person(id)||{}).phone, trip().cc);
+
+/** Resumen completo de una persona: qué puso, qué le toca y qué transferencias le quedan. */
+function mensajePersona(id){
+  const t = trip(), all = balances(), codes = activeCurrencies();
+  const L = [`Hola ${pname(id)}! Cuentas de *${t.name}*:`];
+  for (const code of codes){
+    let paid = 0, owed = 0, reemb = 0;
+    for (const e of t.expenses){
+      if (e.currency !== code) continue;
+      if (e.payer === id) paid += e.amountMinor;
+      const sh = sharesOf(e);
+      if (id in sh) owed += sh[id];
+    }
+    for (const p of t.payments){
+      if (p.currency !== code) continue;
+      if (p.from === id) reemb += p.amountMinor;
+      if (p.to === id) reemb -= p.amountMinor;
+    }
+    const v = all[code][id] || 0;
+    L.push("", `*${code}*`,
+      `Pusiste: ${fmt(paid, code)}`,
+      `Te toca: ${fmt(owed, code)}`);
+    if (reemb) L.push(`Reembolsos: ${fmtSigned(reemb, code)}`);
+    L.push(`Saldo: ${fmtSigned(v, code)} ${v>0?"(te deben)":v<0?"(debés)":"(al día)"}`);
+  }
+  const acc = [];
+  for (const code of codes) for (const x of settle(all[code])){
+    if (x.from === id) acc.push(`Transferile ${fmt(x.amount, code)} a ${pname(x.to)}`);
+    else if (x.to === id) acc.push(`${pname(x.from)} te transfiere ${fmt(x.amount, code)}`);
+  }
+  L.push("");
+  if (acc.length){ L.push("*Para cerrar:*"); acc.forEach(a => L.push("• " + a)); }
+  else L.push("*Estás al día, no hay nada que transferir.* ✅");
+  return L.join("\n");
+}
+/** Mensaje corto de una transferencia puntual, para el que tiene que pagar. */
+function mensajeTransferencia(x, code){
+  return `Hola ${pname(x.from)}! Para cerrar las cuentas de *${trip().name}* te toca transferirle `
+       + `${fmt(x.amount, code)} a ${pname(x.to)}.`;
+}
+
+/** Abre WhatsApp con el mensaje escrito. Usa el esquema de la app: no necesita internet. */
+function enviarWhatsApp(tel, texto){
+  if (!tel) return false;
+  window.location.href = `whatsapp://send?phone=${tel}&text=${encodeURIComponent(texto)}`;
+  return true;
+}
+async function copiarTexto(texto, btn){
+  try{
+    if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(texto);
+    else {
+      const ta = document.createElement("textarea");
+      ta.value = texto; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+    }
+    if (btn){ const t0 = btn.textContent; btn.textContent = "Copiado ✓"; setTimeout(()=>btn.textContent = t0, 1400); }
+  }catch(e){ alert("No pude copiar. Mensaje:\n\n" + texto); }
+}
+
+/* ---------- equivalente informativo ---------- */
+const canEquiv = () => {
+  const t = trip();
+  return activeCurrencies().every(c => c === t.ref || Number(cur(c).rate) > 0);
+};
+function toRef(minor, code){
+  const t = trip();
+  if (code === t.ref) return minor;
+  return Math.round(toMajor(minor, cur(code).decimals) * (Number(cur(code).rate)||0) * pow10(cur(t.ref).decimals));
+}
+
+/* ============================================================
+   Render
+   ============================================================ */
+function render(){
+  const t = trip();
+  $("#tripTitle").textContent = t.name;
+  $("#tripSel").innerHTML = S.trips.map(x=>`<option value="${x.id}"${x.id===t.id?" selected":""}>${esc(x.name)}</option>`).join("");
+  $$("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === ui.tab)));
+  $("#fab").classList.toggle("hidden", ui.tab === "config");
+  const v = $("#view");
+  v.innerHTML = ui.tab === "gastos"   ? viewGastos()
+              : ui.tab === "saldos"   ? viewSaldos()
+              : ui.tab === "liquidar" ? viewLiquidar()
+              :                         viewConfig();
+  save();
+  $("#storeWarn").classList.toggle("hidden", storageOk);
+  if (typeof mostrarPersistencia === "function") mostrarPersistencia();
+}
+
+/* ---------- vista: gastos ---------- */
+function viewGastos(){
+  const t = trip();
+  if (!t.people.length) return emptyPeople();
+
+  const tot = {};
+  for (const e of t.expenses) tot[e.currency] = (tot[e.currency]||0) + e.amountMinor;
+  const codes = Object.keys(tot);
+
+  let totalsHtml;
+  if (!codes.length){
+    totalsHtml = `<p class="small muted" style="margin:0">Todavía no cargaste gastos.</p>`;
+  } else {
+    totalsHtml = codes.map(c => `<div class="bal">
+        <div class="n"><b>${esc(c)}</b> <span class="muted small">${esc(cur(c).symbol)}</span>
+          <div class="tiny muted">${fmt(Math.round(tot[c]/t.people.length), c)} por persona si fuera todo parejo</div></div>
+        <div class="v mono big">${fmt(tot[c], c)}</div>
+      </div>`).join("");
+    if (codes.length > 1 && S.showEquiv && canEquiv()){
+      const eq = codes.reduce((a,c)=>a+toRef(tot[c],c),0);
+      totalsHtml += `<div class="bal"><div class="n muted small">Equivalente informativo en ${esc(t.ref)}</div>
+        <div class="v mono muted">${fmt(eq, t.ref)}</div></div>`;
+    }
+  }
+
+  const rows = t.expenses.map(e => ({kind:"e", ...e}))
+    .concat(t.payments.map(p => ({kind:"p", ...p})))
+    .filter(r => {
+      if (ui.filterCur && r.currency !== ui.filterCur) return false;
+      if (ui.filterPerson){
+        const inv = r.kind==="e"
+          ? (r.payer===ui.filterPerson || Object.keys(r.split.parts).includes(ui.filterPerson))
+          : (r.from===ui.filterPerson || r.to===ui.filterPerson);
+        if (!inv) return false;
+      }
+      if (ui.filterText){
+        const q = ui.filterText.toLowerCase();
+        if (!((r.desc||"")+" "+(r.category||"")+" "+(r.note||"")).toLowerCase().includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a,b)=> (b.date||"").localeCompare(a.date||"") || b.id.localeCompare(a.id));
+
+  let list;
+  if (!rows.length){
+    list = (t.expenses.length || t.payments.length)
+      ? `<div class="empty"><p>Ningún movimiento coincide con el filtro.</p></div>`
+      : `<div class="empty"><p><strong>Sin movimientos</strong></p><p class="small">Tocá el botón + para cargar el primer gasto.</p></div>`;
+  } else {
+    let lastMonth = "";
+    list = rows.map(r => {
+      const d = r.date || "", mk = d.slice(0,7);
+      let sep = "";
+      if (mk !== lastMonth){ lastMonth = mk; sep = `<div class="daysep">${esc(monthLabel(d))}</div>`; }
+      const day = d.slice(8,10), mon = monthShort(d);
+      if (r.kind === "p"){
+        return sep + `<div class="exp" data-pay="${r.id}">
+          <div class="date"><b>${day}</b>${esc(mon)}</div>
+          <div class="body">
+            <div class="t">↔ Reembolso · ${esc(pname(r.from))} → ${esc(pname(r.to))}</div>
+            <div class="s">${esc(r.note||"Pago entre personas")}</div>
+          </div>
+          <div class="amt mono">${fmt(r.amountMinor, r.currency)}<span class="c">${esc(r.currency)}</span></div>
+        </div>`;
+      }
+      const nPart = splitIds(r.split).length;
+      return sep + `<div class="exp" data-exp="${r.id}">
+        <div class="date"><b>${day}</b>${esc(mon)}</div>
+        <div class="body">
+          <div class="t">${esc(r.desc||"(sin descripción)")}</div>
+          <div class="s">${esc(pname(r.payer))} pagó · ${nPart} ${nPart===1?"persona":"personas"}${r.category?" · "+esc(r.category):""}</div>
+        </div>
+        <div class="amt mono">${fmt(r.amountMinor, r.currency)}<span class="c">${esc(r.currency)}</span></div>
+      </div>`;
+    }).join("");
+  }
+
+  const peopleOpts = t.people.map(p=>`<option value="${p.id}"${ui.filterPerson===p.id?" selected":""}>${esc(p.name)}</option>`).join("");
+  const curOpts = t.currencies.map(c=>`<option value="${esc(c.code)}"${ui.filterCur===c.code?" selected":""}>${esc(c.code)}</option>`).join("");
+
+  return `
+  <div class="card">
+    <div class="card-head"><h2>Total gastado</h2><span class="spacer"></span>
+      <span class="small muted">${t.expenses.length} gasto${t.expenses.length===1?"":"s"}</span></div>
+    ${totalsHtml}
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>Movimientos</h2><span class="spacer"></span>
+      <button class="btn ghost sm" id="btnPago">Registrar reembolso</button>
+    </div>
+    <div class="filters">
+      <input type="text" id="fText" placeholder="Buscar…" value="${esc(ui.filterText)}">
+      <select id="fPerson"><option value="">Toda persona</option>${peopleOpts}</select>
+      <select id="fCur"><option value="">Toda moneda</option>${curOpts}</select>
+    </div>
+    ${list}
+  </div>`;
+}
+function monthShort(iso){
+  const m = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  return m[parseInt((iso||"").slice(5,7),10)-1] || "";
+}
+function monthLabel(iso){
+  const m = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  return (m[parseInt((iso||"").slice(5,7),10)-1]||"") + " " + (iso||"").slice(0,4);
+}
+function emptyPeople(){
+  return `<div class="card"><div class="empty">
+    <p><strong>Primero cargá las personas</strong></p>
+    <p class="small">Agregá quiénes participan del viaje para poder repartir los gastos.</p>
+    <p><button class="btn" data-go="config">Ir a Ajustes</button></p>
+  </div></div>`;
+}
+function noData(){
+  return `<div class="card"><div class="empty"><p><strong>Sin datos</strong></p><p class="small">Cargá gastos para ver las cuentas.</p></div></div>`;
+}
+
+/* ---------- vista: saldos ---------- */
+function viewSaldos(){
+  const t = trip();
+  if (!t.people.length) return emptyPeople();
+  const all = balances(), codes = activeCurrencies();
+  if (!codes.length) return noData();
+
+  const cards = codes.map(code => {
+    const b = all[code];
+    const max = Math.max(1, ...Object.values(b).map(Math.abs));
+    const rows = t.people.map(p => {
+      const v = b[p.id] || 0;
+      const cls = v>0 ? "pos" : v<0 ? "neg" : "muted";
+      const txt = v>0 ? "le deben" : v<0 ? "debe" : "al día";
+      return `<div class="bal">
+        <div class="avatar" style="background:${avatarColor(p.id)}">${esc(initials(p.name))}</div>
+        <div class="n">${esc(p.name)}
+          <div class="barwrap"><i style="width:${Math.round(Math.abs(v)/max*100)}%;background:${v>=0?"var(--pos)":"var(--neg)"}"></i></div>
+        </div>
+        <div class="v mono ${cls}">${fmtSigned(v, code)}<div class="tiny muted" style="font-weight:500">${txt}</div></div>
+      </div>`;
+    }).join("");
+    const open = Object.values(b).filter(v=>v!==0).length;
+    return `<div class="curcard">
+      <h3>Cuenta en ${esc(code)} <span class="spacer"></span>
+        <span class="pill ${open?"cur":"on"}">${open?open+" saldo"+(open===1?"":"s")+" abierto"+(open===1?"":"s"):"cerrada ✓"}</span></h3>
+      ${rows}
+    </div>`;
+  }).join("");
+
+  // detalle: pagó / le toca / reembolsos, por moneda
+  const detail = codes.map(code => {
+    const paid = {}, owed = {}, ref = {};
+    for (const e of t.expenses.filter(e=>e.currency===code)){
+      paid[e.payer] = (paid[e.payer]||0) + e.amountMinor;
+      for (const [id,v] of Object.entries(sharesOf(e))) owed[id] = (owed[id]||0) + v;
+    }
+    const pays = t.payments.filter(p=>p.currency===code);
+    for (const p of pays){ ref[p.from] = (ref[p.from]||0) + p.amountMinor; ref[p.to] = (ref[p.to]||0) - p.amountMinor; }
+    const hasRef = pays.length > 0;
+    const body = t.people.map(p => `<tr>
+        <td>${esc(p.name)}</td>
+        <td class="mono">${fmt(paid[p.id]||0, code)}</td>
+        <td class="mono">${fmt(owed[p.id]||0, code)}</td>
+        ${hasRef?`<td class="mono">${fmtSigned(ref[p.id]||0, code)}</td>`:""}
+        <td class="mono ${(all[code][p.id]||0)>=0?"pos":"neg"}">${fmtSigned(all[code][p.id]||0, code)}</td>
+      </tr>`).join("");
+    return `<h3 class="muted small" style="margin:12px 0 4px">${esc(code)}</h3>
+      <div class="scrollx"><table class="mini">
+        <thead><tr><th>Persona</th><th>Pagó</th><th>Le toca</th>${hasRef?"<th>Reembolsos</th>":""}<th>Saldo</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table></div>`;
+  }).join("");
+
+  let equiv = "";
+  if (codes.length > 1 && S.showEquiv){
+    if (!canEquiv()){
+      equiv = `<div class="card"><div class="notice">Para ver el equivalente cargá los tipos de cambio en Ajustes.</div></div>`;
+    } else {
+      const rows = t.people.map(p => {
+        const v = codes.reduce((a,c)=>a+toRef(all[c][p.id]||0, c), 0);
+        return `<tr><td>${esc(p.name)}</td>
+          ${codes.map(c=>`<td class="mono ${(all[c][p.id]||0)>=0?"pos":"neg"}">${fmtSigned(all[c][p.id]||0,c)}</td>`).join("")}
+          <td class="mono ${v>=0?"pos":"neg"}"><b>${fmtSigned(v, t.ref)}</b></td></tr>`;
+      }).join("");
+      equiv = `<div class="card">
+        <div class="card-head"><h2>Equivalente en ${esc(t.ref)}</h2><span class="pill cur">informativo</span></div>
+        <p class="small muted" style="margin:0 0 6px">Sólo para tener una idea del total. La liquidación se sigue haciendo moneda por moneda.</p>
+        <div class="scrollx"><table class="mini">
+          <thead><tr><th>Persona</th>${codes.map(c=>`<th>${esc(c)}</th>`).join("")}<th>Equiv. ${esc(t.ref)}</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+      </div>`;
+    }
+  }
+
+  return `
+  <div class="card">
+    <div class="card-head"><h2>Saldos por moneda</h2><span class="spacer"></span>
+      <span class="small muted">${codes.length} cuenta${codes.length===1?"":"s"}</span></div>
+    ${cards}
+  </div>
+  ${equiv}
+  <div class="card">
+    <div class="card-head"><h2>Detalle por persona</h2></div>
+    ${detail}
+    <p class="tiny muted" style="margin:10px 0 0">"Le toca" es la parte que le corresponde de los gastos de esa moneda. El saldo ya incluye los reembolsos registrados.</p>
+  </div>`;
+}
+
+/* ---------- vista: liquidación ---------- */
+function viewLiquidar(){
+  const t = trip();
+  if (!t.people.length) return emptyPeople();
+  const all = balances(), codes = activeCurrencies();
+  if (!codes.length) return noData();
+
+  const cards = codes.map(code => {
+    const tx = settle(all[code]);
+    const open = Object.values(all[code]).filter(v=>v!==0).length;
+    const body = !tx.length
+      ? `<p class="small pos" style="margin:0">Todo saldado en ${esc(code)}. No hace falta ninguna transferencia. ✓</p>`
+      : `<p class="small muted" style="margin:0 0 4px">${tx.length} transferencia${tx.length===1?"":"s"} para cerrar ${open} saldo${open===1?"":"s"}.</p>` +
+        tx.map((x,i)=>`<div class="tx">
+          <div class="who row">
+            <span class="avatar" style="background:${avatarColor(x.from)};width:24px;height:24px;font-size:10px">${esc(initials(pname(x.from)))}</span>
+            <b>${esc(pname(x.from))}</b><span class="arrow">→</span>
+            <span class="avatar" style="background:${avatarColor(x.to)};width:24px;height:24px;font-size:10px">${esc(initials(pname(x.to)))}</span>
+            <b>${esc(pname(x.to))}</b>
+          </div>
+          <div class="mono" style="font-weight:650">${fmt(x.amount, code)}</div>
+          ${telDe(x.from)?`<button class="btn ghost sm" data-watx="${i}" data-code="${esc(code)}" title="Avisarle a ${esc(pname(x.from))}">WhatsApp</button>`:""}
+          <button class="btn ghost sm" data-mark="${i}" data-code="${esc(code)}">Marcar pagado</button>
+        </div>`).join("");
+    return `<div class="curcard">
+      <h3>Liquidación en ${esc(code)} <span class="spacer"></span><span class="pill cur">${esc(cur(code).symbol)}</span></h3>
+      ${body}
+    </div>`;
+  }).join("");
+
+  const totalTx = codes.reduce((a,c)=>a+settle(all[c]).length, 0);
+
+  const puedeCompartir = typeof navigator.share === "function";
+  const envios = t.people.map(p => {
+    const tel = telDe(p.id);
+    const principal = tel
+      ? `<button class="btn sm" data-wa="${p.id}">WhatsApp</button>`
+      : (puedeCompartir
+          ? `<button class="btn ghost sm" data-share="${p.id}">Compartir</button>`
+          : `<span class="tiny" style="color:var(--warn)">sin teléfono</span>`);
+    return `<div class="bal">
+      <div class="avatar" style="background:${avatarColor(p.id)}">${esc(initials(p.name))}</div>
+      <div class="n">${esc(p.name)}<div class="tiny muted">${tel ? "+"+esc(tel) : "cargá el teléfono en Ajustes"}</div></div>
+      ${principal}
+      <button class="btn ghost sm" data-copy="${p.id}">Copiar</button>
+    </div>`;
+  }).join("");
+
+  return `<div class="card">
+    <div class="card-head"><h2>Cómo saldar las cuentas</h2><span class="spacer"></span>
+      <span class="small muted">${totalTx} transferencia${totalTx===1?"":"s"} en total</span></div>
+    <p class="small muted" style="margin:0 0 12px">Cada moneda se salda por separado: lo que se gastó en euros se devuelve en euros. Así nadie pierde ni gana por el tipo de cambio.</p>
+    ${cards}
+    <div class="sep"></div>
+    <p class="tiny muted" style="margin:0">Se busca la menor cantidad de transferencias: primero se cruzan deudas que coinciden exactamente y después se empareja al que más debe con el que más le deben. Con N personas nunca hacen falta más de N−1 pagos por moneda.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Mandarle a cada uno su liquidación</h2></div>
+    <p class="small muted" style="margin:0 0 8px">Abre WhatsApp con el mensaje ya escrito: lo que puso, lo que le toca, su saldo en cada moneda y las transferencias que le quedan.</p>
+    ${envios}
+  </div>`;
+}
+
+/* ---------- vista: ajustes ---------- */
+function viewConfig(){
+  const t = trip();
+  const people = t.people.length
+    ? t.people.map(p=>`<div class="bal">
+        <div class="avatar" style="background:${avatarColor(p.id)}">${esc(initials(p.name))}</div>
+        <div class="n">${esc(p.name)}
+          <div class="tiny ${p.phone?"muted":""}" style="${p.phone?"":"color:var(--warn)"}">${
+            p.phone ? "📱 " + esc(p.phone) + " → +" + esc(waNumero(p.phone, t.cc)) : "sin teléfono"}</div></div>
+        <button class="btn ghost sm" data-editp="${p.id}">Editar</button>
+        <button class="btn danger sm" data-delp="${p.id}">Quitar</button>
+      </div>`).join("")
+    : `<p class="small muted">Todavía no hay nadie cargado.</p>`;
+
+  const used = code => t.expenses.some(e=>e.currency===code) || t.payments.some(p=>p.currency===code);
+  const curRows = t.currencies.map(c=>`<tr>
+      <td><b>${esc(c.code)}</b> <span class="muted">${esc(c.symbol)}</span>${c.code===t.ref?' <span class="pill cur">referencia</span>':""}</td>
+      <td>${used(c.code)?'<span class="pos">sí</span>':'<span class="muted">—</span>'}</td>
+      <td>${c.code===t.ref
+          ? '<span class="muted">—</span>'
+          : `<input type="text" class="mono" style="width:130px;text-align:right" data-rate="${esc(c.code)}" value="${esc(c.rate?numStr(c.rate):"")}" placeholder="sin cargar" inputmode="decimal">`}</td>
+      <td>${(c.code===t.ref||used(c.code))?"":`<button class="btn danger sm" data-delc="${esc(c.code)}">Quitar</button>`}</td>
+    </tr>`).join("");
+
+  const refOpts = t.currencies.map(c=>`<option value="${esc(c.code)}"${c.code===t.ref?" selected":""}>${esc(c.code)} — ${esc(c.symbol)}</option>`).join("");
+  const addOpts = CATALOG.filter(c => !t.currencies.some(x=>x.code===c.code))
+    .map(c=>`<option value="${c.code}">${c.code} — ${esc(c.name)}</option>`).join("");
+
+  return `
+  <div class="card">
+    <div class="card-head"><h2>Personas</h2></div>
+    ${people}
+    <div class="sep"></div>
+    <div class="row">
+      <input type="text" id="newPerson" placeholder="Nombre" style="flex:1;min-width:130px">
+      <input type="tel" id="newPhone" placeholder="Teléfono (opcional)" style="flex:1;min-width:150px">
+      <button class="btn" id="btnAddPerson">Agregar</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <span class="tiny muted">Código de país por defecto</span>
+      <input type="text" id="ccInput" class="mono" value="${esc(t.cc)}" style="width:70px;text-align:center" inputmode="numeric">
+      <span class="tiny muted">54 = Argentina. Cargá el teléfono como lo tenés en la agenda; el 0 y el 15 se sacan solos.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Monedas</h2></div>
+    <p class="small muted" style="margin:0 0 10px">Cada moneda lleva su propia cuenta: los saldos y la liquidación se calculan por separado y no se convierte nada. El tipo de cambio es opcional y sólo se usa para el resumen equivalente.</p>
+    <div class="scrollx"><table class="mini">
+      <thead><tr><th>Moneda</th><th>En uso</th><th>1 unidad = … ${esc(t.ref)}</th><th></th></tr></thead>
+      <tbody>${curRows}</tbody>
+    </table></div>
+    <div class="sep"></div>
+    <div class="grid2">
+      <label class="fld"><span>Agregar moneda</span>
+        <select id="addCur"><option value="">Elegir…</option>${addOpts}<option value="__custom">Otra (manual)…</option></select></label>
+      <label class="fld"><span>Moneda de referencia</span><select id="refCur">${refOpts}</select></label>
+    </div>
+    <label class="row small" style="cursor:pointer">
+      <input type="checkbox" id="chkEquiv"${S.showEquiv?" checked":""} style="width:18px;height:18px;accent-color:var(--accent)">
+      <span>Mostrar el total equivalente en ${esc(t.ref)} (informativo, no afecta los saldos)</span>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Viaje y datos</h2></div>
+    <label class="fld"><span>Nombre del viaje</span><input type="text" id="tripName" value="${esc(t.name)}"></label>
+    <div class="row">
+      <button class="btn ghost sm" id="btnExport">Exportar copia (JSON)</button>
+      <button class="btn ghost sm" id="btnCsv">Exportar gastos (CSV)</button>
+      <button class="btn ghost sm" id="btnImport">Importar copia</button>
+      <button class="btn danger sm" id="btnWipe">Vaciar este viaje</button>
+    </div>
+    <p class="tiny muted" style="margin:10px 0 0">Los datos se guardan solo en este dispositivo, nunca salen de acá. Si limpiás el historial o cambiás de equipo, se pierden: exportá una copia de vez en cuando.<br>
+      Última copia: <b>${S.lastBackup ? esc(fechaCorta(S.lastBackup)) : "nunca"}</b> · Almacenamiento: <span id="persistState">—</span></p>
+  </div>`;
+}
+function fechaCorta(iso){ return iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4); }
+
+/* ============================================================
+   Modales
+   ============================================================ */
+function closeModal(){ $("#modalHost").innerHTML = ""; document.body.style.overflow = ""; }
+function openModal(html){
+  $("#modalHost").innerHTML = `<div class="modal-bg" role="dialog" aria-modal="true"><div class="modal">${html}</div></div>`;
+  document.body.style.overflow = "hidden";
+  const bg = $(".modal-bg");
+  bg.addEventListener("mousedown", e => { if (e.target === bg) closeModal(); });
+  const f = $(".modal input, .modal select, .modal textarea");
+  if (f) setTimeout(()=>f.focus(), 30);
+}
+
+/* ---------- modal: gasto ---------- */
+let draft = null;
+
+function openExpense(id){
+  const t = trip();
+  if (!t.people.length){ ui.tab = "config"; render(); return; }
+  const e = id ? t.expenses.find(x=>x.id===id) : null;
+  draft = e ? JSON.parse(JSON.stringify(e)) : {
+    id:null, date: todayISO(), desc:"", category:"", currency: t.ref, amountMinor:0,
+    payer: t.people[0].id,
+    split:{ mode:"equal", parts: Object.fromEntries(t.people.map(p=>[p.id,1])) }
+  };
+  draft.amountRaw = e ? numStr(toMajor(e.amountMinor, cur(e.currency).decimals), 4).replace(".",",") : "";
+  drawExpenseModal();
+}
+
+function drawExpenseModal(){
+  const t = trip(), d = draft;
+  const modes = [["equal","Iguales"],["shares","Partes"],["percent","%"],["exact","Montos"]];
+  const seg = modes.map(([k,l])=>`<button data-mode="${k}" aria-pressed="${d.split.mode===k}">${l}</button>`).join("");
+  const rows = t.people.map(p=>{
+    const on = Object.prototype.hasOwnProperty.call(d.split.parts, p.id);
+    const val = on ? d.split.parts[p.id] : "";
+    const showW = d.split.mode !== "equal";
+    const disp = d.split.mode === "exact" && on
+      ? numStr(toMajor(Number(val)||0, cur(d.currency).decimals), 4).replace(".",",")
+      : (val===""?"":numStr(val,4).replace(".",","));
+    return `<div class="splitrow">
+      <input type="checkbox" data-inc="${p.id}"${on?" checked":""} aria-label="Incluir a ${esc(p.name)}">
+      <span class="nm">${esc(p.name)}</span>
+      ${showW?`<input type="text" class="w mono" data-w="${p.id}" value="${esc(disp)}"${on?"":" disabled"} inputmode="decimal">`:""}
+      <span class="calc mono" data-calc="${p.id}"></span>
+    </div>`;
+  }).join("");
+
+  const payerOpts = t.people.map(p=>`<option value="${p.id}"${d.payer===p.id?" selected":""}>${esc(p.name)}</option>`).join("");
+  const curOpts = t.currencies.map(c=>`<option value="${esc(c.code)}"${d.currency===c.code?" selected":""}>${esc(c.code)} ${esc(c.symbol)}</option>`).join("")
+                + `<option value="__add">＋ Agregar moneda…</option>`;
+
+  openModal(`
+    <h2>${d.id?"Editar gasto":"Nuevo gasto"}</h2>
+    <label class="fld"><span>Descripción</span>
+      <input type="text" id="eDesc" value="${esc(d.desc)}" placeholder="Cena en el puerto"></label>
+    <div class="grid3">
+      <label class="fld"><span>Importe</span>
+        <input type="text" id="eAmount" class="mono" inputmode="decimal" value="${esc(d.amountRaw||"")}" placeholder="0,00"></label>
+      <label class="fld"><span>Moneda</span><select id="eCur">${curOpts}</select></label>
+      <label class="fld"><span>Fecha</span><input type="date" id="eDate" value="${esc(d.date)}"></label>
+    </div>
+    <div class="grid2">
+      <label class="fld"><span>Pagó</span><select id="ePayer">${payerOpts}</select></label>
+      <label class="fld"><span>Categoría</span>
+        <input type="text" id="eCat" list="catlist" value="${esc(d.category||"")}" placeholder="Opcional">
+        <datalist id="catlist">${CATEGORIES.map(c=>`<option value="${c}">`).join("")}</datalist></label>
+    </div>
+    <div class="fld"><span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px;font-weight:550">Se reparte entre</span>
+      <div class="segmented" id="eMode">${seg}</div>
+    </div>
+    <div id="splitList" style="margin-top:6px">${rows}</div>
+    <div id="splitMsg" class="tiny" style="margin-top:8px;min-height:18px"></div>
+    <div class="modal-actions">
+      ${d.id?`<button class="btn danger" id="eDel" style="flex:0 0 auto">Borrar</button>`:""}
+      <button class="btn ghost" id="eCancel">Cancelar</button>
+      <button class="btn" id="eSave">Guardar</button>
+    </div>
+  `);
+  wireExpenseModal();
+  refreshPreview();
+}
+
+function readAmount(){
+  const n = parseAmount($("#eAmount").value);
+  return isNaN(n) ? 0 : toMinor(n, cur($("#eCur").value).decimals);
+}
+function refreshPreview(){
+  const d = draft, code = $("#eCur").value, total = readAmount();
+  const sh = sharesWith(total, d.split);
+  $$("[data-calc]").forEach(el => {
+    const id = el.dataset.calc;
+    el.textContent = Object.prototype.hasOwnProperty.call(sh,id) ? fmt(sh[id], code) : "—";
+  });
+
+  const msg = $("#splitMsg"), ids = splitIds(d.split);
+  if (!ids.length){ msg.innerHTML = `<span style="color:var(--neg)">Elegí al menos una persona.</span>`; return; }
+  const sum = ids.reduce((a,id)=>a+(Number(d.split.parts[id])||0),0);
+  if (d.split.mode === "exact"){
+    const diff = total - sum;
+    msg.innerHTML = diff === 0
+      ? `<span class="pos">Los montos cierran con el total.</span>`
+      : `<span style="color:var(--neg)">Diferencia de ${fmt(Math.abs(diff),code)} ${diff>0?"sin asignar":"de más"}.</span>`;
+  } else if (d.split.mode === "percent"){
+    msg.innerHTML = Math.abs(sum-100) < .005
+      ? `<span class="pos">Suma 100%.</span>`
+      : `<span class="muted">Suma ${sum.toLocaleString("es-AR",{maximumFractionDigits:2})}% — se reparte en proporción.</span>`;
+  } else if (d.split.mode === "shares"){
+    msg.innerHTML = `<span class="muted">${sum.toLocaleString("es-AR",{maximumFractionDigits:2})} partes en total.</span>`;
+  } else {
+    msg.innerHTML = `<span class="muted">${ids.length} ${ids.length===1?"persona":"personas"} en partes iguales.</span>`;
+  }
+}
+function wireExpenseModal(){
+  const d = draft;
+  $("#eCancel").onclick = closeModal;
+  $("#eAmount").addEventListener("input", refreshPreview);
+
+  $("#eCur").addEventListener("change", () => {
+    const sel = $("#eCur").value;
+    let destino = sel;
+    if (sel === "__add"){                        // alta al vuelo, sin salir del gasto
+      const code = promptCurrency();
+      $("#eCur").value = d.currency;             // restauro antes de leer el formulario
+      destino = code || d.currency;
+    }
+    syncDraftFromForm();
+    d.currency = destino;
+    if (d.split.mode === "exact"){   // los montos exactos estaban en otra moneda: vuelvo a repartir parejo
+      const ids = splitIds(d.split);
+      const alloc = allocate(readAmount(), ids.map(()=>1));
+      ids.forEach((id,i)=> d.split.parts[id] = alloc[i]);
+    }
+    drawExpenseModal();
+  });
+
+  $("#eMode").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-mode]"); if (!b) return;
+    syncDraftFromForm();
+    const mode = b.dataset.mode, ids = splitIds(d.split);
+    if (mode === "equal" || mode === "shares") ids.forEach(id => d.split.parts[id] = 1);
+    else if (mode === "percent"){
+      const each = ids.length ? Math.round(10000/ids.length)/100 : 0;
+      ids.forEach(id => d.split.parts[id] = each);
+    } else if (mode === "exact"){
+      const alloc = allocate(readAmount(), ids.map(()=>1));
+      ids.forEach((id,i) => d.split.parts[id] = alloc[i]);
+    }
+    d.split.mode = mode;
+    drawExpenseModal();
+  });
+
+  $("#splitList").addEventListener("change", ev => {
+    const cb = ev.target.closest("[data-inc]"); if (!cb) return;
+    syncDraftFromForm();
+    const id = cb.dataset.inc;
+    if (cb.checked) d.split.parts[id] = (d.split.mode === "equal" || d.split.mode === "shares") ? 1 : 0;
+    else delete d.split.parts[id];
+    drawExpenseModal();
+  });
+  $("#splitList").addEventListener("input", ev => {
+    const w = ev.target.closest("[data-w]"); if (!w) return;
+    const n = parseAmount(w.value);
+    d.split.parts[w.dataset.w] = d.split.mode === "exact"
+      ? (isNaN(n) ? 0 : toMinor(n, cur($("#eCur").value).decimals))
+      : (isNaN(n) ? 0 : n);
+    refreshPreview();
+  });
+
+  if ($("#eDel")) $("#eDel").onclick = () => {
+    if (!confirm("¿Borrar este gasto?")) return;
+    const t = trip(); t.expenses = t.expenses.filter(x=>x.id!==d.id);
+    closeModal(); render();
+  };
+  $("#eSave").onclick = saveExpense;
+}
+function syncDraftFromForm(){
+  const d = draft;
+  if (!$("#eDesc")) return;
+  d.desc = $("#eDesc").value.trim();
+  d.date = $("#eDate").value || todayISO();
+  d.category = $("#eCat").value.trim();
+  d.currency = $("#eCur").value;
+  d.payer = $("#ePayer").value;
+  d.amountRaw = $("#eAmount").value;
+  d.amountMinor = readAmount();
+}
+function saveExpense(){
+  syncDraftFromForm();
+  const d = draft, t = trip();
+  if (!(d.amountMinor > 0)) return alert("Poné un importe mayor a cero.");
+  const ids = splitIds(d.split);
+  if (!ids.length) return alert("Elegí al menos una persona entre quienes se reparte.");
+
+  if (d.split.mode === "exact"){
+    const sum = ids.reduce((a,id)=>a+(Number(d.split.parts[id])||0),0);
+    const diff = d.amountMinor - sum;
+    if (diff !== 0){
+      if (!confirm(`Los montos no cierran (${fmt(Math.abs(diff), d.currency)} ${diff>0?"sin asignar":"de más"}).\n\n¿Ajusto la diferencia en ${pname(ids[0])}?`)) return;
+      const nuevo = (Number(d.split.parts[ids[0]])||0) + diff;
+      if (nuevo < 0) return alert("El ajuste dejaría un monto negativo. Revisá los importes.");
+      d.split.parts[ids[0]] = nuevo;
+    }
+  }
+  if (!d.desc) d.desc = d.category || "Gasto";
+
+  const rec = { id: d.id || uid(), date:d.date, desc:d.desc, category:d.category,
+                currency:d.currency, amountMinor:d.amountMinor, payer:d.payer, split:d.split };
+  if (d.id) t.expenses[t.expenses.findIndex(x=>x.id===d.id)] = rec;
+  else t.expenses.push(rec);
+  closeModal(); render();
+}
+
+/* ---------- modal: reembolso ---------- */
+function openPayment(id, pre){
+  const t = trip();
+  if (t.people.length < 2) return alert("Necesitás al menos dos personas.");
+  const p = id ? t.payments.find(x=>x.id===id) : null;
+  const from = p ? p.from : (pre?.from || t.people[0].id);
+  const to   = p ? p.to   : (pre?.to   || t.people[1].id);
+  const code = p ? p.currency : (pre?.currency || t.ref);
+  const amtRaw = p ? numStr(toMajor(p.amountMinor, cur(p.currency).decimals),4).replace(".",",")
+                   : (pre ? numStr(toMajor(pre.amount, cur(code).decimals),4).replace(".",",") : "");
+  const opt = sel => t.people.map(x=>`<option value="${x.id}"${x.id===sel?" selected":""}>${esc(x.name)}</option>`).join("");
+  const curOpts = t.currencies.map(c=>`<option value="${esc(c.code)}"${code===c.code?" selected":""}>${esc(c.code)} ${esc(c.symbol)}</option>`).join("");
+
+  openModal(`
+    <h2>${id?"Editar reembolso":"Registrar reembolso"}</h2>
+    <p class="small muted" style="margin:-4px 0 12px">Un pago de una persona a otra para cancelar deuda, en la misma moneda de la cuenta. No es un gasto del viaje.</p>
+    <div class="grid2">
+      <label class="fld"><span>Paga</span><select id="pFrom">${opt(from)}</select></label>
+      <label class="fld"><span>Recibe</span><select id="pTo">${opt(to)}</select></label>
+    </div>
+    <div class="grid3">
+      <label class="fld"><span>Importe</span><input type="text" id="pAmount" class="mono" inputmode="decimal" value="${esc(amtRaw)}" placeholder="0,00"></label>
+      <label class="fld"><span>Moneda</span><select id="pCur">${curOpts}</select></label>
+      <label class="fld"><span>Fecha</span><input type="date" id="pDate" value="${esc(p?p.date:todayISO())}"></label>
+    </div>
+    <label class="fld"><span>Nota</span><input type="text" id="pNote" value="${esc(p?p.note||"":"")}" placeholder="Opcional"></label>
+    <div class="modal-actions">
+      ${id?`<button class="btn danger" id="pDel" style="flex:0 0 auto">Borrar</button>`:""}
+      <button class="btn ghost" id="pCancel">Cancelar</button>
+      <button class="btn" id="pSave">Guardar</button>
+    </div>`);
+
+  $("#pCancel").onclick = closeModal;
+  if ($("#pDel")) $("#pDel").onclick = () => {
+    if (!confirm("¿Borrar este reembolso?")) return;
+    const t2 = trip(); t2.payments = t2.payments.filter(x=>x.id!==id);
+    closeModal(); render();
+  };
+  $("#pSave").onclick = () => {
+    const f = $("#pFrom").value, tt = $("#pTo").value, c = $("#pCur").value;
+    if (f === tt) return alert("Elegí dos personas distintas.");
+    const n = parseAmount($("#pAmount").value);
+    if (!(n > 0)) return alert("Poné un importe mayor a cero.");
+    const rec = { id: id||uid(), date: $("#pDate").value||todayISO(), from:f, to:tt, currency:c,
+                  amountMinor: toMinor(n, cur(c).decimals), note: $("#pNote").value.trim() };
+    const t2 = trip();
+    if (id) t2.payments[t2.payments.findIndex(x=>x.id===id)] = rec;
+    else t2.payments.push(rec);
+    closeModal(); render();
+  };
+}
+
+/* ---------- modal: viajes ---------- */
+function openTrips(){
+  const rows = S.trips.map(t=>`<div class="bal">
+      <div class="n">${esc(t.name)}<div class="tiny muted">${t.people.length} personas · ${t.expenses.length} gastos</div></div>
+      ${t.id===S.activeTrip?'<span class="pill cur">activo</span>':`<button class="btn ghost sm" data-usetrip="${t.id}">Abrir</button>`}
+      ${S.trips.length>1?`<button class="btn danger sm" data-deltrip="${t.id}">Borrar</button>`:""}
+    </div>`).join("");
+  const curOpts = CATALOG.map(c=>`<option value="${c.code}"${c.code==="ARS"?" selected":""}>${c.code} — ${esc(c.name)}</option>`).join("");
+  openModal(`
+    <h2>Viajes</h2>
+    ${rows}
+    <div class="sep"></div>
+    <div class="row">
+      <input type="text" id="newTrip" placeholder="Nombre del nuevo viaje" style="flex:1;min-width:150px">
+      <select id="newTripCur" style="width:auto" aria-label="Moneda principal">${curOpts}</select>
+      <button class="btn" id="btnNewTrip">Crear</button>
+    </div>
+    <p class="tiny muted" style="margin:6px 0 0">La moneda que elijas es sólo la primera de la lista; después podés agregar todas las que uses.</p>
+    <div class="modal-actions"><button class="btn ghost" id="tClose">Cerrar</button></div>`);
+  $("#tClose").onclick = closeModal;
+  $("#btnNewTrip").onclick = () => {
+    const n = $("#newTrip").value.trim(); if (!n) return;
+    const t = blankTrip(n, $("#newTripCur").value);
+    S.trips.push(t); S.activeTrip = t.id;
+    closeModal(); ui.tab = "config"; render();
+  };
+  $("#newTrip").addEventListener("keydown", e => { if (e.key==="Enter") $("#btnNewTrip").click(); });
+  $(".modal").addEventListener("click", ev => {
+    const u = ev.target.closest("[data-usetrip]"), d = ev.target.closest("[data-deltrip]");
+    if (u){ S.activeTrip = u.dataset.usetrip; closeModal(); render(); }
+    if (d){
+      const t = S.trips.find(x=>x.id===d.dataset.deltrip);
+      if (!confirm(`¿Borrar el viaje "${t.name}" con todos sus gastos?`)) return;
+      S.trips = S.trips.filter(x=>x.id!==d.dataset.deltrip);
+      if (S.activeTrip === d.dataset.deltrip) S.activeTrip = S.trips[0].id;
+      closeModal(); render();
+    }
+  });
+}
+
+/* ============================================================
+   Import / export
+   ============================================================ */
+function download(name, text, type){
+  const b = new Blob([text], {type:type||"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+}
+const safeName = () => (trip().name.replace(/[^\w\sáéíóúñ-]/gi,"").trim().replace(/\s+/g,"-") || "viaje");
+
+/** En el celular conviene "Compartir" (mandarlo a Drive, mail o WhatsApp);
+    en la compu, descarga común. */
+async function entregar(name, text, type){
+  const file = new File([text], name, {type: type || "application/json"});
+  if (navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], title:name}); return true; }
+    catch(e){ if (e && e.name === "AbortError") return false; }
+  }
+  download(name, text, type);
+  return true;
+}
+async function exportJSON(){
+  const ok = await entregar(`gastos-${safeName()}-${todayISO()}.json`, JSON.stringify(S,null,2));
+  if (ok){ S.lastBackup = todayISO(); save(); if (ui.tab === "config") render(); }
+}
+function exportCSV(){
+  const t = trip();
+  const dec = (m,d) => toMajor(m,d).toFixed(d).replace(".",",");
+  const q = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const lines = [["Fecha","Tipo","Descripcion","Categoria","Moneda","Importe","Pago","Participante","Parte"].join(";")];
+  for (const e of t.expenses.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""))){
+    const cd = cur(e.currency).decimals;
+    for (const [id,v] of Object.entries(sharesOf(e)))
+      lines.push([q(e.date),q("Gasto"),q(e.desc),q(e.category||""),q(e.currency),dec(e.amountMinor,cd),
+                  q(pname(e.payer)),q(pname(id)),dec(v,cd)].join(";"));
+  }
+  for (const p of t.payments.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""))){
+    const cd = cur(p.currency).decimals;
+    lines.push([q(p.date),q("Reembolso"),q(p.note||""),q(""),q(p.currency),dec(p.amountMinor,cd),
+                q(pname(p.from)),q(pname(p.to)),dec(p.amountMinor,cd)].join(";"));
+  }
+  entregar(`gastos-${safeName()}-${todayISO()}.csv`, "﻿"+lines.join("\r\n"), "text/csv;charset=utf-8");
+}
+function importJSON(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const data = JSON.parse(r.result);
+        if (!data || !Array.isArray(data.trips) || !data.trips.length) throw new Error("El archivo no tiene viajes.");
+        if (!confirm("Esto reemplaza todos los datos actuales por los del archivo. ¿Seguir?")) return;
+        S = migrate(data);
+        applyTheme(); render();
+      }catch(err){ alert("No pude leer el archivo: " + err.message); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+/* ============================================================
+   Eventos globales
+   ============================================================ */
+function applyTheme(){
+  const th = S.theme || "auto";
+  if (th === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", th);
+}
+
+$$("nav.tabs button").forEach(b => b.onclick = () => { ui.tab = b.dataset.tab; render(); });
+$("#tripSel").onchange = e => { S.activeTrip = e.target.value; render(); };
+$("#btnTrips").onclick = openTrips;
+$("#btnTheme").onclick = () => {
+  S.theme = S.theme === "auto" ? "light" : S.theme === "light" ? "dark" : "auto";
+  applyTheme(); save();
+};
+$("#fab").onclick = () => openExpense(null);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+$("#view").addEventListener("click", ev => {
+  const t = trip();
+  const go = ev.target.closest("[data-go]");
+  if (go){ ui.tab = go.dataset.go; render(); return; }
+  const ex = ev.target.closest("[data-exp]");
+  if (ex){ openExpense(ex.dataset.exp); return; }
+  const pa = ev.target.closest("[data-pay]");
+  if (pa){ openPayment(pa.dataset.pay); return; }
+  if (ev.target.id === "btnPago"){ openPayment(null); return; }
+
+  const mk = ev.target.closest("[data-mark]");
+  if (mk){
+    const code = mk.dataset.code;
+    const tx = settle(balances()[code] || {})[Number(mk.dataset.mark)];
+    if (tx) openPayment(null, {from:tx.from, to:tx.to, currency:code, amount:tx.amount});
+    return;
+  }
+
+  const wa = ev.target.closest("[data-wa]");
+  if (wa){ enviarWhatsApp(telDe(wa.dataset.wa), mensajePersona(wa.dataset.wa)); return; }
+  const sh = ev.target.closest("[data-share]");
+  if (sh){ navigator.share({text: mensajePersona(sh.dataset.share)}).catch(()=>{}); return; }
+  const cp = ev.target.closest("[data-copy]");
+  if (cp){ copiarTexto(mensajePersona(cp.dataset.copy), cp); return; }
+  const wtx = ev.target.closest("[data-watx]");
+  if (wtx){
+    const code = wtx.dataset.code;
+    const x = settle(balances()[code] || {})[Number(wtx.dataset.watx)];
+    if (x) enviarWhatsApp(telDe(x.from), mensajeTransferencia(x, code));
+    return;
+  }
+
+  if (ev.target.id === "btnAddPerson"){ addPerson(); return; }
+  const rp = ev.target.closest("[data-editp]");
+  if (rp){ openPerson(rp.dataset.editp); return; }
+  const dp = ev.target.closest("[data-delp]");
+  if (dp){
+    const id = dp.dataset.delp;
+    const used = t.expenses.some(e => e.payer===id || id in e.split.parts) || t.payments.some(p=>p.from===id||p.to===id);
+    if (used) return alert("No puedo quitar a "+pname(id)+": participa en gastos o reembolsos ya cargados. Borrá o editá esos movimientos primero.");
+    t.people = t.people.filter(p=>p.id!==id); render();
+    return;
+  }
+  const dc = ev.target.closest("[data-delc]");
+  if (dc){ t.currencies = t.currencies.filter(c=>c.code!==dc.dataset.delc); render(); return; }
+
+  if (ev.target.id === "btnExport"){ exportJSON(); return; }
+  if (ev.target.id === "btnCsv"){ exportCSV(); return; }
+  if (ev.target.id === "btnImport"){ importJSON(); return; }
+  if (ev.target.id === "btnWipe"){
+    if (!confirm(`¿Borrar todos los gastos, personas y monedas de "${t.name}"?`)) return;
+    const fresh = blankTrip(t.name, t.ref); fresh.id = t.id;
+    S.trips[S.trips.findIndex(x=>x.id===t.id)] = fresh;
+    render();
+  }
+});
+
+$("#view").addEventListener("input", ev => {
+  if (ev.target.id === "fText"){
+    ui.filterText = ev.target.value;
+    const pos = ev.target.selectionStart;
+    render();
+    const f = $("#fText"); if (f){ f.focus(); f.setSelectionRange(pos,pos); }
+  }
+});
+$("#view").addEventListener("change", ev => {
+  const t = trip();
+  if (ev.target.id === "fPerson"){ ui.filterPerson = ev.target.value; render(); }
+  if (ev.target.id === "fCur"){ ui.filterCur = ev.target.value; render(); }
+  if (ev.target.id === "tripName"){ t.name = ev.target.value.trim() || "Viaje"; render(); }
+  if (ev.target.id === "ccInput"){ t.cc = (ev.target.value.replace(/\D/g,"") || "54"); render(); return; }
+  if (ev.target.id === "addCur"){ addCurrency(ev.target.value); return; }
+  if (ev.target.id === "refCur"){
+    const nuevo = ev.target.value, k = Number(cur(nuevo).rate) || 0;
+    if (k > 0) for (const c of t.currencies) c.rate = c.code === nuevo ? 1 : (Number(c.rate)||0) / k;
+    else for (const c of t.currencies) c.rate = c.code === nuevo ? 1 : 0;
+    t.ref = nuevo; render(); return;
+  }
+  if (ev.target.id === "chkEquiv"){ S.showEquiv = ev.target.checked; render(); return; }
+  const r = ev.target.closest("[data-rate]");
+  if (r){
+    const n = parseAmount(r.value);
+    cur(r.dataset.rate).rate = isNaN(n) ? 0 : n;
+    save();
+  }
+});
+$("#view").addEventListener("keydown", ev => {
+  if ((ev.target.id === "newPerson" || ev.target.id === "newPhone") && ev.key === "Enter"){ ev.preventDefault(); addPerson(); }
+});
+
+function addPerson(){
+  const inp = $("#newPerson"); if (!inp) return;
+  const n = inp.value.trim(); if (!n) return;
+  const t = trip();
+  if (t.people.some(p => p.name.toLowerCase() === n.toLowerCase())) return alert("Ya hay alguien con ese nombre.");
+  t.people.push({id:uid(), name:n, phone:($("#newPhone").value||"").trim()});
+  render();
+  const f = $("#newPerson"); if (f) f.focus();
+}
+
+/* ---------- modal: persona ---------- */
+function openPerson(id){
+  const t = trip(), p = person(id);
+  if (!p) return;
+  openModal(`
+    <h2>Editar persona</h2>
+    <label class="fld"><span>Nombre</span><input type="text" id="uName" value="${esc(p.name)}"></label>
+    <label class="fld"><span>Teléfono para WhatsApp</span>
+      <input type="tel" id="uPhone" value="${esc(p.phone||"")}" placeholder="11 5555-4444"></label>
+    <p class="tiny muted" id="uPreview" style="margin:-4px 0 0"></p>
+    <div class="modal-actions">
+      <button class="btn ghost" id="uCancel">Cancelar</button>
+      <button class="btn" id="uSave">Guardar</button>
+    </div>`);
+  const prev = () => {
+    const n = waNumero($("#uPhone").value, t.cc);
+    $("#uPreview").innerHTML = $("#uPhone").value.trim()
+      ? `Se va a abrir WhatsApp con <b>+${esc(n)}</b>. Si no es ese número, escribilo con el código de país completo.`
+      : `Sin teléfono vas a poder copiar el mensaje o compartirlo, pero no abrir el chat directo.`;
+  };
+  $("#uPhone").addEventListener("input", prev); prev();
+  $("#uCancel").onclick = closeModal;
+  $("#uSave").onclick = () => {
+    const n = $("#uName").value.trim();
+    if (!n) return alert("El nombre no puede quedar vacío.");
+    if (t.people.some(x => x.id !== id && x.name.toLowerCase() === n.toLowerCase())) return alert("Ya hay alguien con ese nombre.");
+    p.name = n; p.phone = $("#uPhone").value.trim();
+    closeModal(); render();
+  };
+}
+/** Alta de moneda por prompt. Devuelve el código agregado (o el existente), o null. */
+function promptCurrency(){
+  const t = trip();
+  const avail = CATALOG.filter(c => !t.currencies.some(x=>x.code===c.code));
+  const hint = avail.length ? "\n\nConocidas: " + avail.map(c=>c.code).join(", ") : "";
+  const code = (prompt("Código de la moneda (3 letras):" + hint)||"").trim().toUpperCase();
+  if (!code) return null;
+  if (t.currencies.some(c=>c.code===code)) return code;
+  const known = CATALOG.find(c=>c.code===code);
+  if (known){
+    t.currencies.push({code:known.code, symbol:known.symbol, decimals:known.decimals, rate:0});
+    return code;
+  }
+  const symbol = (prompt("Símbolo:", code)||code).trim();
+  const dec = parseInt(prompt("Decimales (0 o 2):","2"),10);
+  t.currencies.push({code, symbol, decimals: isNaN(dec)?2:Math.max(0,Math.min(4,dec)), rate:0});
+  return code;
+}
+function addCurrency(val){
+  const t = trip();
+  if (!val) return;
+  if (val === "__custom"){ promptCurrency(); return render(); }
+  const c = CATALOG.find(x=>x.code===val);
+  if (c && !t.currencies.some(x=>x.code===c.code))
+    t.currencies.push({code:c.code, symbol:c.symbol, decimals:c.decimals, rate:0});
+  render();
+}
+
+/* ============================================================
+   App instalable y offline
+   ============================================================ */
+
+/* El service worker sólo corre servido por http(s); abierto como archivo
+   suelto la app igual funciona, simplemente no se instala. */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/* Le pide al navegador que no descarte los datos si le falta espacio. */
+async function pedirPersistencia(){
+  if (!navigator.storage || !navigator.storage.persist) return;
+  try{
+    if (!(await navigator.storage.persisted())) await navigator.storage.persist();
+  }catch(e){ /* el navegador no lo soporta: seguimos igual */ }
+  mostrarPersistencia();
+}
+async function mostrarPersistencia(){
+  const el = $("#persistState"); if (!el) return;
+  try{
+    el.textContent = (navigator.storage && navigator.storage.persisted && await navigator.storage.persisted())
+      ? "persistente ✓" : "normal";
+  }catch(e){ el.textContent = "normal"; }
+}
+
+let promptInstalacion = null;
+const btnInstall = $("#btnInstall");
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  promptInstalacion = e;
+  btnInstall.classList.remove("hidden");
+});
+btnInstall.onclick = async () => {
+  if (!promptInstalacion) return;
+  promptInstalacion.prompt();
+  const { outcome } = await promptInstalacion.userChoice;
+  if (outcome === "accepted") btnInstall.classList.add("hidden");
+  promptInstalacion = null;
+};
+window.addEventListener("appinstalled", () => { btnInstall.classList.add("hidden"); promptInstalacion = null; });
+
+migrate(S);
+applyTheme();
+render();
+pedirPersistencia();
+</script>
+</body>
+</html>
