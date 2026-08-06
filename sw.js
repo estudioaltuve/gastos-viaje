@@ -2,7 +2,10 @@
    Estrategia cache-first sobre el propio código de la app.
    Los datos del usuario NO pasan por acá: viven en localStorage. */
 
-const CACHE = "gastos-viaje-v1";
+/* OJO: subir este número en CADA cambio del código.
+   Si no, los celulares que ya tienen la app instalada siguen usando
+   la versión vieja para siempre, porque la estrategia es cache-first. */
+const CACHE = "gastos-viaje-v2";
 const ASSETS = [
   "./",
   "./index.html",

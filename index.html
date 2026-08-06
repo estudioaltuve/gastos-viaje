@@ -467,8 +467,8 @@ function mensajePersona(id){
   }
   const acc = [];
   for (const code of codes) for (const x of settle(all[code])){
-    if (x.from === id) acc.push(`Transferile ${fmt(x.amount, code)} a ${pname(x.to)}`);
-    else if (x.to === id) acc.push(`${pname(x.from)} te transfiere ${fmt(x.amount, code)}`);
+    if (x.from === id) acc.push(`Tenés que pagarle ${fmt(x.amount, code)} a ${pname(x.to)}`);
+    else if (x.to === id) acc.push(`${pname(x.from)} te tiene que pagar ${fmt(x.amount, code)}`);
   }
   L.push("");
   if (acc.length){ L.push("*Para cerrar:*"); acc.forEach(a => L.push("• " + a)); }
@@ -477,7 +477,7 @@ function mensajePersona(id){
 }
 /** Mensaje corto de una transferencia puntual, para el que tiene que pagar. */
 function mensajeTransferencia(x, code){
-  return `Hola ${pname(x.from)}! Para cerrar las cuentas de *${trip().name}* te toca transferirle `
+  return `Hola ${pname(x.from)}! Para cerrar las cuentas de *${trip().name}* tenés que pagarle `
        + `${fmt(x.amount, code)} a ${pname(x.to)}.`;
 }
 
@@ -1434,7 +1434,29 @@ function addCurrency(val){
 /* El service worker sólo corre servido por http(s); abierto como archivo
    suelto la app igual funciona, simplemente no se instala. */
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      reg.addEventListener("updatefound", () => {
+        const nuevo = reg.installing;
+        if (!nuevo) return;
+        nuevo.addEventListener("statechange", () => {
+          // hay controlador previo => es una actualización, no la primera instalación
+          if (nuevo.state === "installed" && navigator.serviceWorker.controller) avisarActualizacion();
+        });
+      });
+    }).catch(()=>{});
+  });
+}
+function avisarActualizacion(){
+  if ($("#updWarn")) return;
+  const d = document.createElement("div");
+  d.id = "updWarn";
+  d.className = "notice";
+  d.style.cssText = "margin:10px 0 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap";
+  d.innerHTML = `<span style="flex:1">Hay una versión nueva de la app.</span>
+    <button class="btn sm" id="updBtn">Actualizar</button>`;
+  document.querySelector("header.top").appendChild(d);
+  $("#updBtn").onclick = () => location.reload();
 }
 
 /* Le pide al navegador que no descarte los datos si le falta espacio. */
